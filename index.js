@@ -71,18 +71,6 @@ function getTimezoneMidnightTimestamp(date, timezone = 'UTC') {
   return Date.UTC(year, month - 1, day, 0, 0, 0);
 }
 
-function calculateExpirationTime(expirationMinutes, timezone = 'UTC') {
-  const currentTime = getCurrentTimeInTimezone(timezone);
-  const expirationTime = new Date(currentTime.getTime() + (expirationMinutes * 60 * 1000));
-  return expirationTime;
-}
-
-function isExpired(targetTime, timezone = 'UTC') {
-  const currentTime = getCurrentTimeInTimezone(timezone);
-  const target = new Date(targetTime);
-  return currentTime > target;
-}
-
 function formatTimeInTimezone(time, timezone = 'UTC', format = 'full') {
   try {
     const date = new Date(time);
@@ -216,21 +204,27 @@ function isValidTimezone(timezone) {
 const lunarCalendar = {
   // 农历数据 (1900-2100年)
   lunarInfo: [
-    0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2,
-    0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977,
-    0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970,
-    0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950,
-    0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557,
-    0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5b0, 0x14573, 0x052b0, 0x0a9a8, 0x0e950, 0x06aa0,
-    0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0,
-    0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b6a0, 0x195a6,
-    0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570,
-    0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0,
-    0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5,
-    0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930,
-    0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530,
-    0x05aa0, 0x076a3, 0x096d0, 0x04bd7, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45,
-    0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0
+    0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2, // 1900-1909
+    0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977, // 1910-1919
+    0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970, // 1920-1929
+    0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950, // 1930-1939
+    0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557, // 1940-1949
+    0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5b0, 0x14573, 0x052b0, 0x0a9a8, 0x0e950, 0x06aa0, // 1950-1959
+    0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0, // 1960-1969
+    0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b6a0, 0x195a6, // 1970-1979
+    0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570, // 1980-1989
+    0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0, // 1990-1999
+    0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5, // 2000-2009
+    0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930, // 2010-2019
+    0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530, // 2020-2029
+    0x05aa0, 0x076a3, 0x096d0, 0x04afb, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45, // 2030-2039
+    0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0, // 2040-2049
+    0x14b63, 0x09370, 0x14a38, 0x04970, 0x064b0, 0x168a6, 0x0ea50, 0x1a978, 0x16aa0, 0x0a6c0, // 2050-2059 (修正2057: 0x1a978)
+    0x0aa60, 0x16d63, 0x0d260, 0x0d950, 0x0d554, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, // 2060-2069
+    0x025d0, 0x092d0, 0x0cab5, 0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, // 2070-2079
+    0x15176, 0x052b0, 0x0a930, 0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, // 2080-2089
+    0x0d260, 0x0ea65, 0x0d530, 0x05aa0, 0x076a3, 0x096d0, 0x04afb, 0x1a4bb, 0x0a4d0, 0x0d0b0, // 2090-2099 (修正2099: 0x0d0b0)
+    0x0d250 // 2100
   ],
 
   // 天干地支
@@ -276,8 +270,8 @@ const lunarCalendar = {
   solar2lunar: function(year, month, day) {
     if (year < 1900 || year > 2100) return null;
 
-    const baseDate = new Date(1900, 0, 31);
-    const objDate = new Date(year, month - 1, day);
+    const baseDate = Date.UTC(1900, 0, 31);
+    const objDate = Date.UTC(year, month - 1, day);
     //let offset = Math.floor((objDate - baseDate) / 86400000);
     let offset = Math.round((objDate - baseDate) / 86400000);
 
@@ -1321,60 +1315,31 @@ const adminPage = `
   </div>
 
   <script>
-    // 兼容性函数 - 保持原有接口
-    function formatBeijingTime(date = new Date(), format = 'full') {
-      try {
-        const timezone = 'Asia/Shanghai';
-        const dateObj = new Date(date);
-        
-        if (format === 'date') {
-          return dateObj.toLocaleDateString('zh-CN', {
-            timeZone: timezone,
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          });
-        } else if (format === 'datetime') {
-          return dateObj.toLocaleString('zh-CN', {
-            timeZone: timezone,
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-          });
-        } else {
-          // full format
-          return dateObj.toLocaleString('zh-CN', {
-            timeZone: timezone
-          });
-        }
-      } catch (error) {
-        console.error('时间格式化错误: ' + error.message);
-        return new Date(date).toISOString();
-      }
-    }
-
     // 农历转换工具函数 - 前端版本
     const lunarCalendar = {
       // 农历数据 (1900-2100年)
       lunarInfo: [
-        0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2,
-        0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977,
-        0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970,
-        0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950,
-        0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557,
-        0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5b0, 0x14573, 0x052b0, 0x0a9a8, 0x0e950, 0x06aa0,
-        0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0,
-        0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b6a0, 0x195a6,
-        0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570,
-        0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0,
-        0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5,
-        0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930,
-        0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530,
-        0x05aa0, 0x076a3, 0x096d0, 0x04bd7, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45,
-        0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0
+        0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2, // 1900-1909
+        0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977, // 1910-1919
+        0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970, // 1920-1929
+        0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950, // 1930-1939
+        0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557, // 1940-1949
+        0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5b0, 0x14573, 0x052b0, 0x0a9a8, 0x0e950, 0x06aa0, // 1950-1959
+        0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0, // 1960-1969
+        0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b6a0, 0x195a6, // 1970-1979
+        0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570, // 1980-1989
+        0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0, // 1990-1999
+        0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5, // 2000-2009
+        0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930, // 2010-2019
+        0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530, // 2020-2029
+        0x05aa0, 0x076a3, 0x096d0, 0x04afb, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45, // 2030-2039
+        0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0, // 2040-2049
+        0x14b63, 0x09370, 0x14a38, 0x04970, 0x064b0, 0x168a6, 0x0ea50, 0x1a978, 0x16aa0, 0x0a6c0, // 2050-2059 (修正2057: 0x1a978)
+        0x0aa60, 0x16d63, 0x0d260, 0x0d950, 0x0d554, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, // 2060-2069
+        0x025d0, 0x092d0, 0x0cab5, 0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, // 2070-2079
+        0x15176, 0x052b0, 0x0a930, 0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, // 2080-2089
+        0x0d260, 0x0ea65, 0x0d530, 0x05aa0, 0x076a3, 0x096d0, 0x04afb, 0x1a4bb, 0x0a4d0, 0x0d0b0, // 2090-2099 (修正2099: 0x0d0b0)
+        0x0d250 // 2100
       ],
 
       // 天干地支
@@ -1420,8 +1385,8 @@ const adminPage = `
       solar2lunar: function(year, month, day) {
         if (year < 1900 || year > 2100) return null;
 
-        const baseDate = new Date(1900, 0, 31);
-        const objDate = new Date(year, month - 1, day);
+        const baseDate = Date.UTC(1900, 0, 31);
+        const objDate = Date.UTC(year, month - 1, day);
         //let offset = Math.floor((objDate - baseDate) / 86400000);
         let offset = Math.round((objDate - baseDate) / 86400000);
 
@@ -1592,8 +1557,13 @@ const lunarBiz = {
         return;
       }
 
-      const date = new Date(dateInput.value);
-      const lunar = lunarCalendar.solar2lunar(date.getFullYear(), date.getMonth() + 1, date.getDate());
+      // 【修复】直接解析字符串 "YYYY-MM-DD"，避免 new Date() 带来的时区偏移导致日期少一天
+      const parts = dateInput.value.split('-');
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const day = parseInt(parts[2], 10);
+      
+      const lunar = lunarCalendar.solar2lunar(year, month, day);
 
       if (lunar) {
         lunarDisplay.textContent = '农历：' + lunar.fullStr;
@@ -1982,14 +1952,32 @@ const lunarBiz = {
         let lunarExpiryText = '';
         let startLunarText = '';
         if (showLunar) {
-          const expiryDateObj = new Date(subscription.expiryDate);
-          const lunarExpiry = lunarCalendar.solar2lunar(expiryDateObj.getFullYear(), expiryDateObj.getMonth() + 1, expiryDateObj.getDate());
-          lunarExpiryText = lunarExpiry ? lunarExpiry.fullStr : '';
+          // 【修复】列表显示农历时，直接解析字符串年月日，避免 new Date() 时区偏移导致少一天
+          const getLunarParts = (dateStr) => {
+            if (!dateStr) return null;
+            // 兼容 ISO 格式 (2025-07-25T00:00:00.000Z) 和 普通日期格式 (2025-07-25)
+            const datePart = dateStr.split('T')[0]; 
+            const parts = datePart.split('-');
+            if (parts.length !== 3) return null;
+            return {
+              y: parseInt(parts[0], 10),
+              m: parseInt(parts[1], 10),
+              d: parseInt(parts[2], 10)
+            };
+          };
+
+          const expiryParts = getLunarParts(subscription.expiryDate);
+          if (expiryParts) {
+             const lunarExpiry = lunarCalendar.solar2lunar(expiryParts.y, expiryParts.m, expiryParts.d);
+             lunarExpiryText = lunarExpiry ? lunarExpiry.fullStr : '';
+          }
 
           if (subscription.startDate) {
-            const startDateObj = new Date(subscription.startDate);
-            const lunarStart = lunarCalendar.solar2lunar(startDateObj.getFullYear(), startDateObj.getMonth() + 1, startDateObj.getDate());
-            startLunarText = lunarStart ? lunarStart.fullStr : '';
+            const startParts = getLunarParts(subscription.startDate);
+            if (startParts) {
+               const lunarStart = lunarCalendar.solar2lunar(startParts.y, startParts.m, startParts.d);
+               startLunarText = lunarStart ? lunarStart.fullStr : '';
+            }
           }
         }
 
@@ -2228,79 +2216,121 @@ const lunarBiz = {
 
     function showRenewFormModal(subscription) {
         const today = new Date().toISOString().split('T')[0];
-        const expiryDate = new Date(subscription.expiryDate);
-        const formattedExpiry = expiryDate.toLocaleDateString('zh-CN');
+        
+        // 获取当前到期日的显示文本
+        let currentExpiryDisplay = '无';
+        if (subscription.expiryDate) {
+            const datePart = subscription.expiryDate.split('T')[0];
+            
+            currentExpiryDisplay = datePart;
+            
+            // 只有当订阅类型明确为“使用农历”时，才计算并显示农历日期文本
+            if (subscription.useLunar) {
+                try {
+                    const parts = datePart.split('-');
+                    const y = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10);
+                    const d = parseInt(parts[2], 10);
+                    
+                    const lunarObj = lunarCalendar.solar2lunar(y, m, d);
+                    if (lunarObj) {
+                        // 统一格式
+                        currentExpiryDisplay += ' (农历: ' + lunarObj.fullStr + ')';
+                    }
+                } catch (e) {
+                    console.error('农历计算失败', e);
+                }
+            }
+        }
+
         const defaultAmount = subscription.amount || 0;
-        const periodUnit = subscription.periodUnit === 'day' ? '天' :
-                          subscription.periodUnit === 'month' ? '月' : '年';
+        
+        // 获取动态货币符号
+        const currencySymbols = {
+          'CNY': '¥', 'USD': '$', 'HKD': 'HK$', 'TWD': 'NT$', 
+          'JPY': '¥', 'EUR': '€', 'GBP': '£', 'KRW': '₩'
+        };
+        const currency = subscription.currency || 'CNY';
+        const symbol = currencySymbols[currency] || '¥';
+        const currencyLabel = "(" + currency + " " + symbol + ")";
+        
+        // 【修改点1】农历标记：移除 absolute 定位，改为普通 Flex 布局元素，优化移动端显示
+        // 移除了 absolute top-2 right-2，添加了 shrink-0 防止被压缩
+        const lunarBadge = subscription.useLunar ? 
+            '<span class="text-sm bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full border border-purple-200 shrink-0">农历周期</span>' : '';
 
-        const modalHtml = \`
-            <div id="renewFormModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" onclick="closeRenewFormModal(event)">
-                <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white" onclick="event.stopPropagation()">
-                    <div class="flex justify-between items-center pb-3 border-b">
-                        <h3 class="text-xl font-semibold text-gray-900">
-                            <i class="fas fa-sync-alt mr-2"></i>手动续订 - \${subscription.name}
-                        </h3>
-                        <button onclick="closeRenewFormModal()" class="text-gray-400 hover:text-gray-500">
-                            <i class="fas fa-times text-2xl"></i>
-                        </button>
-                    </div>
-
-                    <form id="renewForm" class="mt-4 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">支付日期</label>
-                            <input type="date" id="renewPaymentDate" value="\${today}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">支付金额 (¥)</label>
-                            <input type="number" id="renewAmount" value="\${defaultAmount}" step="0.01" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">续订周期数</label>
-                            <div class="flex items-center space-x-2">
-                                <input type="number" id="renewPeriodMultiplier" value="1" min="1" max="120"
-                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                       oninput="updateNewExpiryPreview()">
-                                <span class="text-gray-600">\${periodUnit}</span>
-                            </div>
-                            <p class="mt-1 text-xs text-gray-500">一次性续订多个周期（如12个月）</p>
-                        </div>
-
-                        <div class="bg-blue-50 rounded-lg p-3">
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-600">当前到期:</span>
-                                <span class="font-medium">\${formattedExpiry}</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">新到期日:</span>
-                                <span class="font-medium text-blue-600" id="newExpiryPreview">计算中...</span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">备注 (可选)</label>
-                            <input type="text" id="renewNote" placeholder="例如：年度优惠、价格调整"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-
-                        <div class="flex justify-end space-x-3 pt-3">
-                            <button type="button" onclick="closeRenewFormModal()"
-                                    class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md">
-                                取消
-                            </button>
-                            <button type="submit" id="confirmRenewBtn"
-                                    class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md">
-                                <i class="fas fa-check mr-1"></i>确认续订
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        \`;
+        // 构建 Modal HTML
+        const modalHtml = 
+            '<div id="renewFormModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" onclick="closeRenewFormModal(event)">' +
+            '    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white" onclick="event.stopPropagation()">' +
+            '        <div class="flex justify-between items-center pb-3 border-b">' +
+            '            <h3 class="text-xl font-semibold text-gray-900">' +
+            '                <i class="fas fa-sync-alt mr-2"></i>手动续订 - ' + subscription.name +
+            '            </h3>' +
+            '            <button onclick="closeRenewFormModal()" class="text-gray-400 hover:text-gray-500">' +
+            '                <i class="fas fa-times text-2xl"></i>' +
+            '            </button>' +
+            '        </div>' +
+            '' +
+            '        <form id="renewForm" class="mt-4 space-y-4">' +
+            '            <div>' +
+            '                <label class="block text-sm font-medium text-gray-700 mb-1">支付日期</label>' +
+            '                <input type="date" id="renewPaymentDate" value="' + today + '"' +
+            '                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">' +
+            '            </div>' +
+            '' +
+            '            <div>' +
+            '                <label class="block text-sm font-medium text-gray-700 mb-1">支付金额 ' + currencyLabel + '</label>' +
+            '                <input type="number" id="renewAmount" value="' + defaultAmount + '" step="0.01" min="0"' +
+            '                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">' +
+            '            </div>' +
+            '' +
+            '            <div>' +
+            // 【修改点2】将农历徽标移动到这里，与 label 同行显示
+            '                <div class="flex justify-between items-center mb-1">' +
+            '                    <label class="block text-sm font-medium text-gray-700">续订周期数</label>' +
+            '                    ' + lunarBadge + 
+            '                </div>' +
+            '                <div class="flex items-center space-x-2">' +
+            '                    <input type="number" id="renewPeriodMultiplier" value="1" min="1" max="120"' +
+            '                           class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"' +
+            '                           oninput="updateNewExpiryPreview()">' +
+            '                    <span class="text-gray-600">个</span>' + 
+            '                </div>' +
+            '                <p class="mt-1 text-xs text-gray-500">一次性续订多个周期（如12个月）</p>' +
+            '            </div>' +
+            '' +
+            // 【修改点3】蓝色预览框中移除了原来的 lunarBadge 插入
+            '            <div class="bg-blue-50 rounded-lg p-3 relative">' +
+            '                <div class="flex justify-start items-center text-sm mb-2 gap-3">' +
+            '                    <span class="text-gray-600 whitespace-nowrap">当前到期:</span>' +
+            '                    <div class="font-medium break-all">' + currentExpiryDisplay + '</div>' + // 增加了 break-all 防止超长日期撑破布局
+            '                </div>' +
+            '                <div class="flex justify-start items-center text-sm gap-3">' +
+            '                    <span class="text-gray-600 whitespace-nowrap">新到期日:</span>' +
+            '                    <div class="font-medium text-blue-600 break-all" id="newExpiryPreview">计算中...</div>' +
+            '                </div>' +
+            '            </div>' +
+            '' +
+            '            <div>' +
+            '                <label class="block text-sm font-medium text-gray-700 mb-1">备注 (可选)</label>' +
+            '                <input type="text" id="renewNote" placeholder="例如：年度优惠、价格调整"' +
+            '                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">' +
+            '            </div>' +
+            '' +
+            '            <div class="flex justify-end space-x-3 pt-3">' +
+            '                <button type="button" onclick="closeRenewFormModal()"' +
+            '                        class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md">' +
+            '                    取消' +
+            '                </button>' +
+            '                <button type="submit" id="confirmRenewBtn"' +
+            '                        class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md">' +
+            '                    <i class="fas fa-check mr-1"></i>确认续订' +
+            '                </button>' +
+            '            </div>' +
+            '        </form>' +
+            '    </div>' +
+            '</div>';
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
@@ -2323,22 +2353,70 @@ const lunarBiz = {
         const subscription = JSON.parse(form.dataset.subscriptionData);
         const multiplier = parseInt(document.getElementById('renewPeriodMultiplier').value) || 1;
 
-        const expiryDate = new Date(subscription.expiryDate);
-        const newExpiryDate = new Date(expiryDate);
+        // 获取基准日期，避免直接 new Date() 的时区问题
+        const getDateParts = (dateStr) => {
+            if (!dateStr) return { year: 2024, month: 1, day: 1 };
+            const part = dateStr.split('T')[0];
+            const parts = part.split('-');
+            return {
+                year: parseInt(parts[0], 10),
+                month: parseInt(parts[1], 10),
+                day: parseInt(parts[2], 10)
+            };
+        };
 
+        const parts = getDateParts(subscription.expiryDate);
+        
         if (subscription.useLunar) {
-            // 农历续订的预览比较复杂，简化显示
-            document.getElementById('newExpiryPreview').textContent = '农历计算中...';
-        } else {
-            const totalPeriodValue = subscription.periodValue * multiplier;
-            if (subscription.periodUnit === 'day') {
-                newExpiryDate.setDate(expiryDate.getDate() + totalPeriodValue);
-            } else if (subscription.periodUnit === 'month') {
-                newExpiryDate.setMonth(expiryDate.getMonth() + totalPeriodValue);
-            } else if (subscription.periodUnit === 'year') {
-                newExpiryDate.setFullYear(expiryDate.getFullYear() + totalPeriodValue);
+            try {
+                // 1. 转为农历对象
+                let lunar = lunarCalendar.solar2lunar(parts.year, parts.month, parts.day);
+                
+                if (lunar) {
+                    // 2. 循环添加周期
+                    let nextLunar = lunar;
+                    for(let i = 0; i < multiplier; i++) {
+                        nextLunar = lunarBiz.addLunarPeriod(nextLunar, subscription.periodValue, subscription.periodUnit);
+                    }
+                    
+                    // 3. 转回公历
+                    const solar = lunarBiz.lunar2solar(nextLunar);
+                    
+                    // 重点：用计算出的公历日期重新获取完整的农历对象，确保有 fullStr 属性
+                    const fullNextLunar = lunarCalendar.solar2lunar(solar.year, solar.month, solar.day);
+                    
+                    // 格式化输出 YYYY-MM-DD
+                    const resultStr = solar.year + '-' + 
+                                      String(solar.month).padStart(2, '0') + '-' + 
+                                      String(solar.day).padStart(2, '0');
+                                      
+                    document.getElementById('newExpiryPreview').textContent = resultStr + ' (农历: ' + fullNextLunar.fullStr + ')';
+                } else {
+                    document.getElementById('newExpiryPreview').textContent = '日期计算错误';
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('newExpiryPreview').textContent = '计算出错';
             }
-            document.getElementById('newExpiryPreview').textContent = newExpiryDate.toLocaleDateString('zh-CN');
+        } else {
+            // 公历计算逻辑
+            const tempDate = new Date(parts.year, parts.month - 1, parts.day);
+            const totalPeriodValue = subscription.periodValue * multiplier;
+            
+            if (subscription.periodUnit === 'day') {
+                tempDate.setDate(tempDate.getDate() + totalPeriodValue);
+            } else if (subscription.periodUnit === 'month') {
+                tempDate.setMonth(tempDate.getMonth() + totalPeriodValue);
+            } else if (subscription.periodUnit === 'year') {
+                tempDate.setFullYear(tempDate.getFullYear() + totalPeriodValue);
+            }
+            
+            // 格式化输出 YYYY-MM-DD
+            const y = tempDate.getFullYear();
+            const m = String(tempDate.getMonth() + 1).padStart(2, '0');
+            const d = String(tempDate.getDate()).padStart(2, '0');
+            
+            document.getElementById('newExpiryPreview').textContent = y + '-' + m + '-' + d;
         }
     }
 
@@ -6171,12 +6249,6 @@ async function sendWebhookNotification(title, content, config, metadata = {}) {
   }
 }
 
-async function sendWeComNotification(message, config) {
-    // This is a placeholder. In a real scenario, you would implement the WeCom notification logic here.
-    console.log("[企业微信] 通知功能未实现");
-    return { success: false, message: "企业微信通知功能未实现" };
-}
-
 async function sendWechatBotNotification(title, content, config) {
   try {
     if (!config.WECHATBOT_WEBHOOK) {
@@ -6411,11 +6483,6 @@ async function sendNotificationToAllChannels(title, commonContent, config, logPr
         const wechatbotContent = commonContent.replace(/(\**|\*|##|#|`)/g, '');
         const success = await sendWechatBotNotification(title, wechatbotContent, config);
         console.log(`${logPrefix} 发送企业微信机器人通知 ${success ? '成功' : '失败'}`);
-    }
-    if (config.ENABLED_NOTIFIERS.includes('weixin')) {
-        const weixinContent = `【${title}】\n\n${commonContent.replace(/(\**|\*|##|#|`)/g, '')}`;
-        const result = await sendWeComNotification(weixinContent, config);
-        console.log(`${logPrefix} 发送企业微信通知 ${result.success ? '成功' : '失败'}. ${result.message}`);
     }
     if (config.ENABLED_NOTIFIERS.includes('email')) {
         const emailContent = commonContent.replace(/(\**|\*|##|#|`)/g, '');
@@ -7008,22 +7075,6 @@ function convertToCNY(amount, currency) {
   return amount * rate;
 }
 
-function getPaymentCountInMonth(subscriptions, year, month, timezone) {
-  let count = 0;
-  subscriptions.forEach(sub => {
-    const paymentHistory = sub.paymentHistory || [];
-    paymentHistory.forEach(payment => {
-      if (!payment.amount || payment.amount <= 0) return;
-      const paymentDate = new Date(payment.date);
-      const parts = getTimezoneDateParts(paymentDate, timezone);
-      if (parts.year === year && parts.month === month) {
-        count++;
-      }
-    });
-  });
-  return count;
-}
-
 function calculateMonthlyExpense(subscriptions, timezone) {
   const now = getCurrentTimeInTimezone(timezone);
   const parts = getTimezoneDateParts(now, timezone);
@@ -7209,10 +7260,10 @@ function getExpenseByCategory(subscriptions, timezone) {
       const paymentParts = getTimezoneDateParts(paymentDate, timezone);
       if (paymentParts.year === currentYear) {
         const categories = sub.category ? sub.category.split(CATEGORY_SEPARATOR_REGEX).filter(c => c.trim()) : ['未分类'];
-        
-        // 【核心修改】先转换为 CNY 再分配给各个分类
+
+        // 先转换为 CNY 再分配给各个分类
         const amountCNY = convertToCNY(payment.amount, sub.currency);
-        
+
         categories.forEach(category => {
           const cat = category.trim() || '未分类';
           categoryMap[cat] = (categoryMap[cat] || 0) + amountCNY / categories.length;
